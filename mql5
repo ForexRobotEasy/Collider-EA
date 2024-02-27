@@ -1,0 +1,86 @@
+
+// Collider EA - Trading Robot
+// Developer's Site: forexroboteasy.com
+// Development: Forex Robot Easy Team
+
+// Include necessary libraries and classes
+#include <Trade\Trade.mqh>
+#include <Indicators\Indicators.mqh>
+#include <ChartObjects\ChartObjects.mqh>
+
+// Initialize variables
+double lotSize = 0.1; // Default lot size
+double stopLoss = 50; // Default stop loss in pips
+double takeProfit = 100; // Default take profit in pips
+
+// Define the trading algorithm
+void OnTick()
+{
+    // Get current market conditions
+    double currentPrice = MarketInfo(Symbol(), MODE_BID);
+    double maValue = iMA(Symbol(), 0, 14, 0, MODE_SMA, PRICE_CLOSE, 0);
+
+    // Check for buy signal
+    if (currentPrice > maValue)
+    {
+        // Place buy order
+        double entryPrice = currentPrice;
+        double stopLossPrice = entryPrice - stopLoss * Point;
+        double takeProfitPrice = entryPrice + takeProfit * Point;
+        int ticket = OrderSend(Symbol(), OP_BUY, lotSize, entryPrice, 0, stopLossPrice, takeProfitPrice);
+        if (ticket > 0)
+        {
+            // Order executed successfully
+            Comment('Buy order placed at ', entryPrice);
+        }
+        else
+        {
+            // Order execution failed
+            Comment('Failed to place buy order!');
+        }
+    }
+
+    // Check for sell signal
+    if (currentPrice < maValue)
+    {
+        // Place sell order
+        double entryPrice = currentPrice;
+        double stopLossPrice = entryPrice + stopLoss * Point;
+        double takeProfitPrice = entryPrice - takeProfit * Point;
+        int ticket = OrderSend(Symbol(), OP_SELL, lotSize, entryPrice, 0, stopLossPrice, takeProfitPrice);
+        if (ticket > 0)
+        {
+            // Order executed successfully
+            Comment('Sell order placed at ', entryPrice);
+        }
+        else
+        {
+            // Order execution failed
+            Comment('Failed to place sell order!');
+        }
+    }
+}
+
+// Initialize the trading robot
+int OnInit()
+{
+    // Set up the chart objects and indicators
+    ObjectsDeleteAll();
+    ChartIndicatorAdd(0, iMA(NULL, 0, 14, 0, MODE_SMA, PRICE_CLOSE, 0));
+
+    // Set up the trading environment
+    Trade.SetExpertMagicNumber(123456);
+    Trade.SetDeviationInPoints(10);
+    Trade.SetStopLossInPoints(stopLoss * Point);
+    Trade.SetTakeProfitInPoints(takeProfit * Point);
+
+    return(INIT_SUCCEEDED);
+}
+
+// Finalize the trading robot
+void OnDeinit(const int reason)
+{
+    // Clean up the chart objects and indicators
+    ObjectsDeleteAll();
+    ChartIndicatorDelete(0, IndicatorFind('Moving Average'));
+}
